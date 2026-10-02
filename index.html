@@ -355,8 +355,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
           <input type="number" id="e-total" placeholder="0.00" min="0" step="0.01" oninput="calcR()" style="font-size:16px;font-weight:600">
         </div>
         <div class="form-group">
-          <label>ราคาต่อหน่วย <span style="font-size:10px;color:var(--text3);font-weight:400">— คำนวณอัตโนมัติ</span></label>
-          <input id="e-rate" readonly style="background:var(--blue-l);font-weight:700;color:var(--blue-d);font-size:15px">
+          <label>ราคาต่อหน่วย (บาท/หน่วย) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
+          <input type="number" id="e-rate" placeholder="0.0000" min="0" step="0.0001" oninput="calcTotalFromRate()" style="font-weight:700;color:var(--blue-d);font-size:15px">
         </div>
       </div>
       <div class="form-group"><label>หมายเหตุ</label><input type="text" id="e-note" placeholder="เช่น งานพิเศษ, อาคารปิดซ่อม"></div>
@@ -1344,9 +1344,19 @@ async function saveSubEntry(subId,bid){
   alert('บันทึกมิเตอร์ย่อยแล้ว (เก็บในเครื่อง — sync ขึ้น Sheets รุ่นถัดไป)');
 }
 function calcR(){
+  // triggered by e-units or e-total change → compute rate
   const u=parseFloat(document.getElementById('e-units').value);
   const t=parseFloat(document.getElementById('e-total').value);
-  document.getElementById('e-rate').value=u>0&&t>0?(t/u).toFixed(4)+' บาท/หน่วย':'—';
+  const rateEl=document.getElementById('e-rate');
+  if(u>0&&t>0){ rateEl.value=(t/u).toFixed(4); }
+  else if(!(u>0)||!(t>0)){ /* don't clear rate if user typed it manually */ }
+}
+function calcTotalFromRate(){
+  // triggered by e-rate change → compute total
+  const u=parseFloat(document.getElementById('e-units').value);
+  const r=parseFloat(document.getElementById('e-rate').value);
+  const totalEl=document.getElementById('e-total');
+  if(u>0&&r>0){ totalEl.value=(u*r).toFixed(2); }
 }
 async function saveEntry(){
   if(!requireAdmin())return;
@@ -1358,9 +1368,11 @@ async function saveEntry(){
   const note=document.getElementById('e-note').value;
   const msgEl=document.getElementById('e-msg');
   if(!bid||!y||!m||isNaN(units)||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกอาคาร ปี เดือน และ หน่วยที่ใช้</div>'; return; }
+  const rateRaw=parseFloat(document.getElementById('e-rate').value);
   const safeTotal = (!isNaN(total) && total>0) ? total : 0;
+  const safeRate = (!isNaN(rateRaw) && rateRaw>0) ? parseFloat(rateRaw.toFixed(4)) : (safeTotal>0?parseFloat((safeTotal/units).toFixed(4)):0);
   const b=getB(bid);
-  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeTotal>0?parseFloat((safeTotal/units).toFixed(4)):0,note};
+  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeRate,note};
   const idx=S.records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(idx>=0){ rec.id=S.records[idx].id; S.records[idx]=rec; } else { S.records.push(rec); }
   sv();
