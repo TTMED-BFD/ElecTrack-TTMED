@@ -356,7 +356,11 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
         </div>
         <div class="form-group">
           <label>ราคาต่อหน่วย (บาท/หน่วย) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
-          <input type="number" id="e-rate" placeholder="0.0000" min="0" step="0.0001" oninput="calcTotalFromRate()" style="font-weight:700;color:var(--blue-d);font-size:15px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="e-rate" placeholder="0.0000" min="0" step="0.0001" oninput="calcTotalFromRate()" style="font-weight:700;color:var(--blue-d);font-size:15px;flex:1">
+            <button class="btn btn-xs" title="📌 Fix ราคาต่อหน่วยนี้เป็นค่าเริ่มต้น" onclick="fixRate('elec')" style="white-space:nowrap;padding:6px 8px">📌 Fix</button>
+          </div>
+          <div id="e-rate-hint" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
         </div>
       </div>
       <div class="form-group"><label>หมายเหตุ</label><input type="text" id="e-note" placeholder="เช่น งานพิเศษ, อาคารปิดซ่อม"></div>
@@ -396,11 +400,24 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
           </select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>หน่วยน้ำ (ลบ.ม.)</label><input type="number" id="ew-units" placeholder="0" min="0" step="0.01" oninput="calcWR()"></div>
-        <div class="form-group"><label>ค่าน้ำรวม (บาท)</label><input type="number" id="ew-total" placeholder="0.00" min="0" step="0.01" oninput="calcWR()"></div>
+      <div class="form-group">
+        <label style="font-size:13px;font-weight:700;color:var(--text1)">💧 หน่วยน้ำ (ลบ.ม.) <span style="color:var(--red);font-size:11px">*จำเป็น</span></label>
+        <input type="number" id="ew-units" placeholder="0" min="0" step="0.01" oninput="calcWR()" style="font-size:22px;font-weight:800;padding:12px 16px;color:var(--text1);border:2px solid var(--teal-d,#0891b2);border-radius:var(--r)">
       </div>
-      <div class="form-group"><label>ราคาต่อหน่วย (คำนวณอัตโนมัติ)</label><input id="ew-rate" readonly style="background:var(--surface2);font-weight:700;color:var(--teal-d)"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ค่าน้ำเดือนนี้ (บาท) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
+          <input type="number" id="ew-total" placeholder="0.00" min="0" step="0.01" oninput="calcWR()" style="font-size:16px;font-weight:600">
+        </div>
+        <div class="form-group">
+          <label>ราคาต่อหน่วย (บาท/ลบ.ม.) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="ew-rate" placeholder="0.0000" min="0" step="0.0001" oninput="calcWTotalFromRate()" style="font-weight:700;color:var(--teal-d,#0891b2);font-size:15px;flex:1">
+            <button class="btn btn-xs" title="📌 Fix ราคาต่อหน่วยนี้เป็นค่าเริ่มต้น" onclick="fixRate('water')" style="white-space:nowrap;padding:6px 8px">📌 Fix</button>
+          </div>
+          <div id="ew-rate-hint" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+        </div>
+      </div>
       <div class="form-group"><label>หมายเหตุ</label><input type="text" id="ew-note" placeholder="เช่น ท่อแตก, งานพิเศษ"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" id="save-water-btn" onclick="saveWaterEntry()">✓ บันทึก</button>
@@ -551,7 +568,10 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
   <div class="card mb20">
     <div class="card-header">
       <div><div class="card-title">🏪 จัดการร้านเช่า</div><div class="card-sub">เพิ่ม/ลบ/แก้ไขร้านค้า และตั้งค่าอัตราค่าไฟ-ค่าน้ำ</div></div>
-      <button class="btn btn-primary" onclick="om('mo-shop')">+ เพิ่มร้านใหม่</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="om('mo-shop')">+ เพิ่มร้านใหม่</button>
+        <button class="btn" onclick="om('mo-import-shop')">📥 นำเข้า CSV</button>
+      </div>
     </div>
     <div id="shop-list-container"><p style="color:var(--text3);text-align:center;padding:24px">ยังไม่มีร้านเช่า กด "+ เพิ่มร้านใหม่"</p></div>
   </div>
@@ -612,18 +632,33 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
     <div class="card-header">
       <div><div class="card-title">🧾 รายงานร้านเช่า</div><div class="card-sub">สรุปค่าไฟ-ค่าน้ำแต่ละร้าน</div></div>
     </div>
-    <div class="form-row mb16" style="max-width:400px">
-      <div class="form-group"><label>เดือน</label>
-        <select id="srp-month">
-          <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option><option value="3">มีนาคม</option>
-          <option value="4">เมษายน</option><option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option>
-          <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option><option value="9">กันยายน</option>
-          <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
-        </select>
-      </div>
-      <div class="form-group"><label>ปี (พ.ศ.)</label><input type="number" id="srp-year" placeholder="2568" min="2560" max="2600"></div>
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="srp-tab-month" class="btn btn-primary" onclick="srpSwitchTab('month')" style="flex:1">📅 รายเดือน</button>
+      <button id="srp-tab-year" class="btn btn-ghost" onclick="srpSwitchTab('year')" style="flex:1">📊 รายปี (ทั้งปี)</button>
     </div>
-    <button class="btn btn-primary" onclick="renderShopReport()">🔍 ดูรายงาน</button>
+    <!-- Monthly controls -->
+    <div id="srp-controls-month">
+      <div class="form-row mb16" style="max-width:400px">
+        <div class="form-group"><label>เดือน</label>
+          <select id="srp-month">
+            <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option><option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option><option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option><option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+          </select>
+        </div>
+        <div class="form-group"><label>ปี (พ.ศ.)</label><input type="number" id="srp-year" placeholder="2568" min="2560" max="2600"></div>
+      </div>
+      <button class="btn btn-primary" onclick="renderShopReport()">🔍 ดูรายงาน</button>
+    </div>
+    <!-- Yearly controls -->
+    <div id="srp-controls-year" style="display:none">
+      <div class="form-row mb16" style="max-width:260px">
+        <div class="form-group"><label>ปี (พ.ศ.)</label><input type="number" id="srp-year-only" placeholder="2568" min="2560" max="2600"></div>
+      </div>
+      <button class="btn btn-primary" onclick="renderShopReportYear()">📊 ดูรายปี</button>
+    </div>
   </div>
   <div id="shop-report-container"></div>
 </div>
@@ -650,6 +685,30 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
     <div class="form-group"><label>รหัสย่อ</label><input type="text" id="ns-code" placeholder="R1" maxlength="5"></div>
     <div class="form-group"><label>หมายเหตุ</label><input type="text" id="ns-note" placeholder="ตำแหน่ง/คำอธิบาย"></div>
     <div class="modal-foot"><button class="btn btn-primary" onclick="addShop()">+ เพิ่ม</button><button class="btn btn-ghost" onclick="cm('mo-shop')">ยกเลิก</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-import-shop">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><div class="modal-title">📥 นำเข้าข้อมูลร้านเช่า (CSV)</div><button class="btn btn-ghost btn-icon" onclick="cm('mo-import-shop')">✕</button></div>
+    <div class="form-group">
+      <label style="font-weight:700">ชื่อร้าน / ชื่อมิเตอร์</label>
+      <input type="text" id="imp-shop-name" placeholder="เช่น ร้านกาแฟ 2 Gether">
+    </div>
+    <div class="form-group">
+      <label style="font-weight:700">รหัสย่อ</label>
+      <input type="text" id="imp-shop-code" placeholder="เช่น R1" maxlength="5">
+    </div>
+    <div class="form-group">
+      <label style="font-weight:700">วาง CSV ที่นี่</label>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">รูปแบบ: ปี พ.ศ., เดือน, ประเภท, เลขก่อน, เลขหลัง, หน่วย, อัตรา, จำนวนเงิน, วันที่</div>
+      <textarea id="imp-shop-csv" rows="8" style="width:100%;font-family:monospace;font-size:11px;resize:vertical" placeholder="วางข้อมูล CSV ที่นี่..."></textarea>
+    </div>
+    <div id="imp-shop-preview" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="importShopCSV()">✓ นำเข้า</button>
+      <button class="btn btn-ghost" onclick="cm('mo-import-shop')">ยกเลิก</button>
+    </div>
   </div>
 </div>
 
@@ -786,6 +845,7 @@ let S={
   notify:[],
   ack_log:[],
   settings:{org:'คณะการแพทย์แผนไทย มหาวิทยาลัยสงขลานครินทร์',base_year:2569,budget:0,water_budget:0,
+    fixed_elec_rate:0,fixed_water_rate:0,
     shop_t1max:150,shop_t2max:500,shop_r1:5,shop_r2:6,shop_r3:7,shop_water_rate:24},
   shops:[],
   shop_records:[],
@@ -987,6 +1047,78 @@ function toggleShop(id){
   const s=S.shops.find(x=>x.id===id);
   if(s){s.active=!s.active; sv(); renderShops(); apiCall('saveshop',s).catch(()=>{});}
 }
+
+// แปลงชื่อเดือนไทยย่อ → เลขเดือน
+const TH_MO={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
+function parseTHMonth(str){ for(const[k,v]of Object.entries(TH_MO)){ if(str.includes(k)) return v; } return null; }
+
+function importShopCSV(){
+  const name=document.getElementById('imp-shop-name').value.trim();
+  const code=document.getElementById('imp-shop-code').value.trim();
+  const csv=document.getElementById('imp-shop-csv').value.trim();
+  if(!name||!code){alert('กรุณากรอกชื่อร้านและรหัสย่อ');return;}
+  if(!csv){alert('กรุณาวาง CSV');return;}
+
+  // หาหรือสร้างร้าน
+  let shop=S.shops.find(s=>s.name===name);
+  if(!shop){
+    shop={id:'s'+Date.now(),name,code,note:'นำเข้าจาก CSV',active:true};
+    S.shops.push(shop);
+    apiCall('saveshop',shop).catch(()=>{});
+  }
+  const sid=shop.id;
+
+  // parse CSV
+  const lines=csv.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('ปี พ.ศ.'));
+  let imported=0, skipped=0;
+  const elecRows={}, waterRows={};
+
+  for(const line of lines){
+    const cols=line.split(',').map(c=>c.trim());
+    if(cols.length<8) continue;
+    const [yearStr,moStr,type,prevStr,currStr,unitsStr,rateStr,totalStr]=cols;
+    const year=parseInt(yearStr); if(isNaN(year)) continue;
+    const month=parseTHMonth(moStr); if(!month) continue;
+    const prev=parseFloat(prevStr)||0;
+    const curr=parseFloat(currStr)||0;
+    const units=parseFloat(unitsStr)||0;
+    const rate=parseFloat(rateStr)||0;
+    const total=parseFloat(totalStr)||0;
+    const key=`${year}_${month}`;
+    if(type.includes('ไฟ')||type.includes('elec')){
+      elecRows[key]={year,month,prev,curr,units,rate,total};
+    } else if(type.includes('น้ำ')||type.includes('water')){
+      waterRows[key]={year,month,prev,curr,units,rate,total};
+    }
+  }
+
+  // merge และสร้าง shop_records
+  const allKeys=new Set([...Object.keys(elecRows),...Object.keys(waterRows)]);
+  for(const key of allKeys){
+    const e=elecRows[key]||{};
+    const w=waterRows[key]||{};
+    const year=e.year||w.year, month=e.month||w.month;
+    const eu=e.units||0, et=e.total||0;
+    const wu=w.units||0, wt=w.total||0;
+    const rec={
+      id:'sri'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      shop_id:sid, year, month,
+      elec_prev:e.prev||null, elec_curr:e.curr||null, elec_units:eu, elec_total:et,
+      water_prev:w.prev||null, water_curr:w.curr||null, water_units:wu, water_total:wt,
+      grand_total:et+wt, timestamp:new Date().toISOString()
+    };
+    const idx=S.shop_records.findIndex(r=>r.shop_id===sid&&r.year===year&&r.month===month);
+    if(idx>=0){rec.id=S.shop_records[idx].id;S.shop_records[idx]=rec;}
+    else S.shop_records.push(rec);
+    imported++;
+    apiCall('saveshoprecord',rec).catch(()=>{});
+  }
+
+  sv(); cm('mo-import-shop');
+  document.getElementById('imp-shop-csv').value='';
+  renderShops();
+  showToast(`✓ นำเข้า "${name}" สำเร็จ — ${imported} เดือน`);
+}
 function delShop(id){
   if(!confirm('ลบร้านนี้? ข้อมูลมิเตอร์ของร้านนี้จะถูกลบด้วย')) return;
   // ลบ shop records ใน sheets ด้วย
@@ -1179,6 +1311,114 @@ function renderShopReport(){
   </div>`;
 }
 
+function srpSwitchTab(tab){
+  const isYear=(tab==='year');
+  document.getElementById('srp-tab-month').className=isYear?'btn btn-ghost':'btn btn-primary';
+  document.getElementById('srp-tab-year').className=isYear?'btn btn-primary':'btn btn-ghost';
+  document.getElementById('srp-controls-month').style.display=isYear?'none':'block';
+  document.getElementById('srp-controls-year').style.display=isYear?'block':'none';
+  document.getElementById('shop-report-container').innerHTML='';
+  if(isYear){
+    const yy=parseInt(document.getElementById('srp-year').value)||S.settings.base_year;
+    document.getElementById('srp-year-only').value=yy;
+  }
+}
+
+function renderShopReportYear(){
+  const y=parseInt(document.getElementById('srp-year-only').value);
+  const el=document.getElementById('shop-report-container');
+  const MO_SHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const shops=S.shops.filter(s=>s.active);
+  if(!shops.length){el.innerHTML='<div class="alert alert-warn"><span class="alert-icon">⚠️</span>ยังไม่มีร้านเช่า</div>';return;}
+  const recs=S.shop_records.filter(r=>r.year===y);
+  if(!recs.length){el.innerHTML=`<div class="alert alert-warn"><span class="alert-icon">⚠️</span>ไม่มีข้อมูลปี ${y}</div>`;return;}
+
+  // monthly totals across all shops
+  const monthTotals=Array.from({length:12},(_,i)=>({m:i+1,elec:0,water:0,grand:0,count:0}));
+  recs.forEach(r=>{
+    const mt=monthTotals[r.month-1];
+    mt.elec+=r.elec_total||0; mt.water+=r.water_total||0; mt.grand+=r.grand_total||0; mt.count++;
+  });
+
+  // per-shop yearly summary
+  let grandYearElec=0, grandYearWater=0, grandYearGrand=0;
+  const shopRows=shops.map(s=>{
+    const srecs=recs.filter(r=>r.shop_id===s.id);
+    const totE=srecs.reduce((a,r)=>a+(r.elec_total||0),0);
+    const totW=srecs.reduce((a,r)=>a+(r.water_total||0),0);
+    const totG=srecs.reduce((a,r)=>a+(r.grand_total||0),0);
+    grandYearElec+=totE; grandYearWater+=totW; grandYearGrand+=totG;
+    const cells=Array.from({length:12},(_,i)=>{
+      const r=srecs.find(x=>x.month===i+1);
+      if(!r) return `<td style="text-align:center;color:var(--text3);font-size:11px">—</td>`;
+      const hasW=r.water_total>0;
+      return `<td style="text-align:right;padding:4px 6px;font-size:12px">
+        <div style="color:var(--amber);font-weight:700">${r.elec_total?.toLocaleString()??'—'}</div>
+        ${hasW?`<div style="color:var(--blue);font-size:10px">${r.water_total?.toLocaleString()}</div>`:''}
+      </td>`;
+    }).join('');
+    return `<tr>
+      <td style="font-weight:700;white-space:nowrap;position:sticky;left:0;background:var(--surface);padding:6px 10px;min-width:120px">
+        ${s.name}<br><span style="font-size:10px;color:var(--text3)">${s.code}</span>
+      </td>
+      ${cells}
+      <td style="text-align:right;font-weight:800;padding:6px 8px;background:var(--surface2)">
+        <div style="color:var(--amber)">${totE.toLocaleString()}</div>
+        ${totW>0?`<div style="color:var(--blue);font-size:11px">${totW.toLocaleString()}</div>`:''}
+        <div style="color:var(--gold);font-size:13px">${totG.toLocaleString()}</div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const monthHeaderCells=MO_SHORT.map((m,i)=>`<th style="text-align:center;min-width:80px;padding:6px 4px">${m}<br><span style="font-size:9px;font-weight:400;color:var(--text3)">${monthTotals[i].count>0?monthTotals[i].grand.toLocaleString():'—'}</span></th>`).join('');
+  const monthTotalCells=MO_SHORT.map((_,i)=>{
+    const mt=monthTotals[i];
+    if(!mt.count) return `<td style="text-align:center;color:var(--text3)">—</td>`;
+    return `<td style="text-align:right;padding:4px 6px">
+      <div style="color:var(--amber);font-weight:700;font-size:12px">${mt.elec.toLocaleString()}</div>
+      ${mt.water>0?`<div style="color:var(--blue);font-size:10px">${mt.water.toLocaleString()}</div>`:''}
+      <div style="color:var(--gold);font-weight:800;font-size:11px">${mt.grand.toLocaleString()}</div>
+    </td>`;
+  }).join('');
+
+  const monthsWithData=monthTotals.filter(m=>m.count>0).length;
+  const avgMonthly=monthsWithData>0?Math.round(grandYearGrand/monthsWithData):0;
+
+  el.innerHTML=`
+  <div class="g3 mb20">
+    <div class="metric metric-blue"><div class="metric-icon metric-icon-blue">⚡</div><div class="metric-val">${grandYearElec.toLocaleString()}</div><div class="metric-label">ค่าไฟรวมทั้งปี ${y} (บาท)</div></div>
+    <div class="metric metric-teal"><div class="metric-icon metric-icon-teal">💧</div><div class="metric-val">${grandYearWater.toLocaleString()}</div><div class="metric-label">ค่าน้ำรวมทั้งปี (บาท)</div></div>
+    <div class="metric metric-amber"><div class="metric-icon metric-icon-amber">💰</div><div class="metric-val">${grandYearGrand.toLocaleString()}</div><div class="metric-label">รวมทั้งปี (บาท) · เฉลี่ย ${avgMonthly.toLocaleString()}/เดือน</div></div>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <div class="card-title" style="margin-bottom:16px">📊 สรุปรายปี ${y} — ทุกร้านเช่า</div>
+    <table class="tbl" style="min-width:900px;font-size:13px">
+      <thead>
+        <tr style="background:var(--surface2)">
+          <th style="position:sticky;left:0;background:var(--surface2);text-align:left;padding:8px 10px">ร้าน</th>
+          ${monthHeaderCells}
+          <th style="text-align:center;min-width:90px;background:var(--surface2)">รวมทั้งปี</th>
+        </tr>
+      </thead>
+      <tbody>${shopRows}</tbody>
+      <tfoot>
+        <tr style="background:var(--surface2);font-weight:800">
+          <td style="position:sticky;left:0;background:var(--surface2);padding:6px 10px">รวมทุกร้าน</td>
+          ${monthTotalCells}
+          <td style="text-align:right;padding:6px 8px">
+            <div style="color:var(--amber)">${grandYearElec.toLocaleString()}</div>
+            ${grandYearWater>0?`<div style="color:var(--blue);font-size:11px">${grandYearWater.toLocaleString()}</div>`:''}
+            <div style="color:var(--gold);font-size:14px">${grandYearGrand.toLocaleString()}</div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">
+      💡 แถวสีเหลือง = ค่าไฟ · สีน้ำเงิน = ค่าน้ำ · ตัวเลขใต้ชื่อเดือน = รวมทุกร้านเดือนนั้น
+    </div>
+  </div>`;
+}
+
 /* ===================== END SHOP MODULE ===================== */
 function nav(id,el){
   closeSidebar(); // ปิด sidebar อัตโนมัติบน mobile
@@ -1208,6 +1448,7 @@ function nav(id,el){
     const now=new Date();
     const rm=document.getElementById('srp-month'); if(rm&&!rm.value)rm.value=now.getMonth()+1;
     const ry=document.getElementById('srp-year'); if(ry&&!ry.value)ry.value=now.getFullYear()+543;
+    const ryOnly=document.getElementById('srp-year-only'); if(ryOnly&&!ryOnly.value)ryOnly.value=now.getFullYear()+543;
   }
 }
 function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
@@ -1312,6 +1553,10 @@ function renderEntryForm(){
   const now=new Date();
   document.getElementById('e-yr').value=now.getFullYear()+543;
   document.getElementById('e-mo').value=now.getMonth()+1;
+  const fr=S.settings.fixed_elec_rate||0;
+  const erEl=document.getElementById('e-rate');
+  if(erEl&&fr>0&&!erEl.value){ erEl.value=fr; }
+  applyFixedRateHints();
   renderSubEntry();
 }
 function renderEntryStatus(){
@@ -1358,6 +1603,39 @@ function calcTotalFromRate(){
   const totalEl=document.getElementById('e-total');
   if(u>0&&r>0){ totalEl.value=(u*r).toFixed(2); }
 }
+function fixRate(type){
+  if(type==='elec'){
+    const r=parseFloat(document.getElementById('e-rate').value);
+    if(!r||r<=0){alert('กรุณากรอกราคาต่อหน่วยก่อน');return;}
+    S.settings.fixed_elec_rate=r; sv();
+    const hint=document.getElementById('e-rate-hint');
+    if(hint) hint.innerHTML=`📌 Fixed: <strong>${r} บาท/หน่วย</strong> — จะเติมอัตโนมัติทุกครั้ง`;
+    showToast(`📌 Fix ราคาไฟ ${r} บาท/หน่วย แล้ว`);
+  } else {
+    const r=parseFloat(document.getElementById('ew-rate').value);
+    if(!r||r<=0){alert('กรุณากรอกราคาต่อหน่วยก่อน');return;}
+    S.settings.fixed_water_rate=r; sv();
+    const hint=document.getElementById('ew-rate-hint');
+    if(hint) hint.innerHTML=`📌 Fixed: <strong>${r} บาท/ลบ.ม.</strong> — จะเติมอัตโนมัติทุกครั้ง`;
+    showToast(`📌 Fix ราคาน้ำ ${r} บาท/ลบ.ม. แล้ว`);
+  }
+}
+function showToast(msg){
+  let t=document.getElementById('_toast');
+  if(!t){ t=document.createElement('div'); t.id='_toast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text1);color:var(--surface);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+    document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',2500);
+}
+function applyFixedRateHints(){
+  const er=S.settings.fixed_elec_rate||0;
+  const wr=S.settings.fixed_water_rate||0;
+  const eh=document.getElementById('e-rate-hint');
+  const wh=document.getElementById('ew-rate-hint');
+  if(eh) eh.innerHTML=er>0?`📌 Fixed: <strong>${er} บาท/หน่วย</strong>`:'' ;
+  if(wh) wh.innerHTML=wr>0?`📌 Fixed: <strong>${wr} บาท/ลบ.ม.</strong>`:'';
+}
 async function saveEntry(){
   if(!requireAdmin())return;
   const bid=document.getElementById('e-bld').value;
@@ -1388,7 +1666,13 @@ async function saveEntry(){
   init(); renderEntryStatus();
   setTimeout(()=>{ if(msgEl) msgEl.innerHTML=''; },5000);
 }
-function clearEntry(){['e-units','e-total','e-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-rate').value='';document.getElementById('e-msg').innerHTML='';}
+function clearEntry(){
+  ['e-units','e-total','e-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('e-msg').innerHTML='';
+  const fr=S.settings.fixed_elec_rate||0;
+  document.getElementById('e-rate').value=fr>0?fr:'';
+  if(fr>0) calcTotalFromRate();
+}
 
 
 /* ===================== WATER ENTRY ===================== */
@@ -1400,6 +1684,10 @@ function renderWaterEntryForm(){
   const mo=document.getElementById('ew-mo');
   if(yr) yr.value=now.getFullYear()+543;
   if(mo) mo.value=now.getMonth()+1;
+  const fwr=S.settings.fixed_water_rate||0;
+  const wrEl=document.getElementById('ew-rate');
+  if(wrEl&&fwr>0&&!wrEl.value){ wrEl.value=fwr; }
+  applyFixedRateHints();
   renderWaterEntryStatus();
 }
 function renderWaterEntryStatus(){
@@ -1412,10 +1700,18 @@ function renderWaterEntryStatus(){
   }).join('');
 }
 function calcWR(){
+  // triggered by ew-units or ew-total change → compute rate
   const u=parseFloat(document.getElementById('ew-units')?.value);
   const t=parseFloat(document.getElementById('ew-total')?.value);
   const el=document.getElementById('ew-rate');
-  if(el) el.value=u>0&&t>0?(t/u).toFixed(4)+' บาท/ลบ.ม.':'—';
+  if(el&&u>0&&t>0){ el.value=(t/u).toFixed(4); }
+}
+function calcWTotalFromRate(){
+  // triggered by ew-rate change → compute total
+  const u=parseFloat(document.getElementById('ew-units')?.value);
+  const r=parseFloat(document.getElementById('ew-rate')?.value);
+  const totalEl=document.getElementById('ew-total');
+  if(totalEl&&u>0&&r>0){ totalEl.value=(u*r).toFixed(2); }
 }
 async function saveWaterEntry(){
   if(!requireAdmin())return;
@@ -1426,9 +1722,12 @@ async function saveWaterEntry(){
   const total=parseFloat(document.getElementById('ew-total').value);
   const note=document.getElementById('ew-note').value;
   const msgEl=document.getElementById('ew-msg');
-  if(!bid||!y||!m||isNaN(units)||isNaN(total)||units<=0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกข้อมูลให้ครบถ้วน</div>'; return; }
+  const wrateRaw=parseFloat(document.getElementById('ew-rate')?.value);
+  if(!bid||!y||!m||isNaN(units)||units<=0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกอาคาร ปี เดือน และ หน่วยน้ำ</div>'; return; }
+  const safeWTotal=(!isNaN(total)&&total>0)?total:0;
+  const safeWRate=(!isNaN(wrateRaw)&&wrateRaw>0)?parseFloat(wrateRaw.toFixed(4)):(safeWTotal>0?parseFloat((safeWTotal/units).toFixed(4)):0);
   const b=getB(bid);
-  const rec={id:'w'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total,rate:parseFloat((total/units).toFixed(4)),note};
+  const rec={id:'w'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeWTotal,rate:safeWRate,note};
   const idx=S.water_records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(idx>=0){rec.id=S.water_records[idx].id;S.water_records[idx]=rec;}else{S.water_records.push(rec);}
   sv();
@@ -1436,7 +1735,7 @@ async function saveWaterEntry(){
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> กำลังบันทึกขึ้น Sheets...';}
   try{
     await apiCall('savewaterrecord', rec);
-    if(msgEl) msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกขึ้น Google Sheets สำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — ${units.toLocaleString()} ลบ.ม. = ${total.toLocaleString()} บาท</div>`;
+    if(msgEl) msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} ลบ.ม.</strong>${safeWTotal>0?' = '+safeWTotal.toLocaleString()+' บาท':''}</div>`;
   }catch(err){
     if(msgEl) msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
   }
@@ -1446,7 +1745,9 @@ async function saveWaterEntry(){
 }
 function clearWaterEntry(){
   ['ew-units','ew-total','ew-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  const r=document.getElementById('ew-rate');if(r)r.value='';
+  const fwr=S.settings.fixed_water_rate||0;
+  const r=document.getElementById('ew-rate');if(r)r.value=fwr>0?fwr:'';
+  if(fwr>0) calcWTotalFromRate();
 }
 
 /* ===================== COMPARE / TREND / HEATMAP / TABLE ===================== */
@@ -2174,6 +2475,139 @@ loadAllFromSheets(false);
 
 // ถ้ามี session login อยู่แล้ว (รีเฟรชหน้าในแท็บเดียวกัน) ให้ตั้งสิทธิ์ตามเดิม
 if(currentRole){ applyRoleUI(); }
+
+/* ===== SEED: นำเข้าข้อมูลร้านเช่า 2 ร้าน (ทำครั้งเดียว) ===== */
+(function seedShops(){
+  const SEED_KEY='et_seed_v1';
+  if(localStorage.getItem(SEED_KEY)) return; // ทำแล้ว ไม่ทำซ้ำ
+
+  // ---------- ร้านที่ 1: ร้านกาแฟ 2 Gether ----------
+  const csvKafe=`2567,ก.ค. 67,ไฟฟ้า,0061,0188,127,5,635
+2567,ส.ค. 67,ไฟฟ้า,0188,0296,108,5,540
+2567,ก.ย. 67,ไฟฟ้า,0296,0405,109,5,545
+2567,ต.ค. 67,ไฟฟ้า,0405,0500,95,5,475
+2567,พ.ย. 67,ไฟฟ้า,0500,0578,78,5,390
+2567,ธ.ค. 67,ไฟฟ้า,0578,0667,89,5,445
+2568,ม.ค. 68,ไฟฟ้า,0667,0748,81,5,405
+2568,ก.พ. 68,ไฟฟ้า,0748,0830,82,5,410
+2568,มี.ค. 68,ไฟฟ้า,0830,0897,67,5,335
+2568,เม.ย. 68,ไฟฟ้า,0897,0954,57,5,285
+2568,พ.ค. 68,ไฟฟ้า,0954,1011,57,5,285
+2568,มิ.ย. 68,ไฟฟ้า,1011,1082,71,5,355
+2568,ก.ค. 68,ไฟฟ้า,1082,1185,103,5,515
+2568,ส.ค. 68,ไฟฟ้า,1185,1280,95,5,475
+2568,ก.ย. 68,ไฟฟ้า,1280,1395,115,5,575
+2568,ต.ค. 68,ไฟฟ้า,1395,1486,91,5,455
+2568,พ.ย. 68,ไฟฟ้า,1486,1564,78,5,390
+2568,ธ.ค. 68,ไฟฟ้า,1564,1644,80,5,400
+2569,ม.ค. 69,ไฟฟ้า,1644,1748,104,5,520
+2569,ก.พ. 69,ไฟฟ้า,1748,1837,89,5,445
+2569,มี.ค. 69,ไฟฟ้า,1837,1925,88,5,440
+2569,เม.ย. 69,ไฟฟ้า,1925,1994,69,5,345
+2569,พ.ค. 69,ไฟฟ้า,1994,2060,66,5,330
+2569,มิ.ย. 69,ไฟฟ้า,2060,2143,83,5,415
+2569,ก.ค. 69,ไฟฟ้า,2143,2230,87,5,435
+2569,ส.ค. 69,ไฟฟ้า,2230,2326,96,5,480
+2569,ก.ย. 69,ไฟฟ้า,2326,2433,107,5,535`;
+
+  // ---------- ร้านที่ 2: ผลิตภัณฑ์อาหารแปรรูปเพื่อสุขภาพ ----------
+  const csvFood=`2567,พ.ค. 67,ไฟฟ้า,0211,0795,584,7,4088
+2567,พ.ค. 67,น้ำประปา,0002,0006,4,24,96
+2567,มิ.ย. 67,ไฟฟ้า,0795,1559,764,7,5348
+2567,มิ.ย. 67,น้ำประปา,0006,0012,6,24,144
+2567,ก.ค. 67,ไฟฟ้า,1559,2439,880,7,6160
+2567,ก.ค. 67,น้ำประปา,0012,0020,8,24,192
+2567,ส.ค. 67,ไฟฟ้า,2439,3374,935,7,6545
+2567,ส.ค. 67,น้ำประปา,0020,0028,8,24,192
+2567,ก.ย. 67,ไฟฟ้า,3374,4346,972,7,6804
+2567,ก.ย. 67,น้ำประปา,0028,0036,8,24,192
+2567,ต.ค. 67,ไฟฟ้า,4346,5196,850,7,5950
+2567,ต.ค. 67,น้ำประปา,0036,0041,5,24,120
+2567,พ.ย. 67,ไฟฟ้า,5196,6027,831,7,5817
+2567,พ.ย. 67,น้ำประปา,0041,0046,5,24,120
+2567,ธ.ค. 67,ไฟฟ้า,6027,6848,821,7,5747
+2567,ธ.ค. 67,น้ำประปา,0046,0050,4,24,96
+2568,ม.ค. 68,ไฟฟ้า,6848,7683,835,7,5845
+2568,ม.ค. 68,น้ำประปา,0050,0055,5,24,120
+2568,ก.พ. 68,ไฟฟ้า,7683,8576,893,7,6251
+2568,ก.พ. 68,น้ำประปา,0055,0061,6,24,144
+2568,มี.ค. 68,ไฟฟ้า,8576,9280,704,7,4928
+2568,มี.ค. 68,น้ำประปา,0061,0066,5,24,120
+2568,เม.ย. 68,ไฟฟ้า,9280,9713,433,6,2598
+2568,เม.ย. 68,น้ำประปา,0066,0069,3,24,72
+2568,พ.ค. 68,ไฟฟ้า,9713,0180,466,6,2796
+2568,พ.ค. 68,น้ำประปา,0069,0073,4,24,96
+2568,มิ.ย. 68,ไฟฟ้า,0180,0846,666,7,4662
+2568,มิ.ย. 68,น้ำประปา,0073,0077,4,24,96
+2568,ก.ค. 68,ไฟฟ้า,0846,1630,784,7,5488
+2568,ก.ค. 68,น้ำประปา,0077,0083,6,24,144
+2568,ส.ค. 68,ไฟฟ้า,1630,2409,779,7,5453
+2568,ส.ค. 68,น้ำประปา,0083,0089,6,24,144
+2568,ก.ย. 68,ไฟฟ้า,2409,3360,951,7,6657
+2568,ก.ย. 68,น้ำประปา,0089,0096,7,24,168
+2568,ต.ค. 68,ไฟฟ้า,3360,4015,655,7,4585
+2568,ต.ค. 68,น้ำประปา,0096,0101,5,24,120
+2568,พ.ย. 68,ไฟฟ้า,4015,4636,621,7,4347
+2568,พ.ย. 68,น้ำประปา,0101,0105,4,24,96
+2568,ธ.ค. 68,ไฟฟ้า,4636,5183,547,7,3829
+2568,ธ.ค. 68,น้ำประปา,0105,0109,4,24,96
+2569,ม.ค. 69,ไฟฟ้า,5183,6033,850,7,5950
+2569,ม.ค. 69,น้ำประปา,0109,0114,5,24,120
+2569,ก.พ. 69,ไฟฟ้า,6033,6678,645,7,4515
+2569,ก.พ. 69,น้ำประปา,0114,0119,5,24,120
+2569,มี.ค. 69,ไฟฟ้า,6678,7465,787,7,5509
+2569,มี.ค. 69,น้ำประปา,0119,0123,4,24,96
+2569,เม.ย. 69,ไฟฟ้า,7465,7922,457,6,2742
+2569,เม.ย. 69,น้ำประปา,0123,0125,2,24,48
+2569,พ.ค. 69,ไฟฟ้า,7922,8353,431,6,2586
+2569,พ.ค. 69,น้ำประปา,0125,0128,3,24,72
+2569,มิ.ย. 69,ไฟฟ้า,8353,8936,583,7,4081
+2569,มิ.ย. 69,น้ำประปา,0128,0132,4,24,96
+2569,ก.ค. 69,ไฟฟ้า,8936,9772,836,7,5852
+2569,ก.ค. 69,น้ำประปา,0132,0137,5,24,120
+2569,ส.ค. 69,ไฟฟ้า,9772,0678,905,7,6335
+2569,ส.ค. 69,น้ำประปา,0137,0142,5,24,120
+2569,ก.ย. 69,ไฟฟ้า,0678,1569,891,7,6237
+2569,ก.ย. 69,น้ำประปา,0142,0147,5,24,120`;
+
+  function seedOne(name, code, csv){
+    if(S.shops.find(s=>s.name===name)) return 0;
+    const sid='s'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const shop={id:sid,name,code,note:'',active:true};
+    S.shops.push(shop);
+    const lines=csv.split('\n').map(l=>l.trim()).filter(Boolean);
+    const elecRows={}, waterRows={};
+    for(const line of lines){
+      const cols=line.split(',').map(c=>c.trim());
+      if(cols.length<8) continue;
+      const [yearStr,moStr,type,prevStr,currStr,unitsStr,rateStr,totalStr]=cols;
+      const year=parseInt(yearStr); if(isNaN(year)) continue;
+      const month=parseTHMonth(moStr); if(!month) continue;
+      const row={year,month,prev:parseFloat(prevStr)||0,curr:parseFloat(currStr)||0,
+                 units:parseFloat(unitsStr)||0,rate:parseFloat(rateStr)||0,total:parseFloat(totalStr)||0};
+      const k=`${year}_${month}`;
+      if(type.includes('ไฟ')) elecRows[k]=row;
+      else if(type.includes('น้ำ')) waterRows[k]=row;
+    }
+    const allKeys=new Set([...Object.keys(elecRows),...Object.keys(waterRows)]);
+    let n=0;
+    for(const k of allKeys){
+      const e=elecRows[k]||{}; const w=waterRows[k]||{};
+      const year=e.year||w.year, month=e.month||w.month;
+      const eu=e.units||0,et=e.total||0,wu=w.units||0,wt=w.total||0;
+      const rec={id:'sri'+Date.now()+'_'+Math.random().toString(36).slice(2),shop_id:sid,year,month,
+        elec_prev:e.prev??null,elec_curr:e.curr??null,elec_units:eu,elec_total:et,
+        water_prev:w.prev??null,water_curr:w.curr??null,water_units:wu,water_total:wt,
+        grand_total:et+wt,timestamp:new Date().toISOString()};
+      S.shop_records.push(rec); n++;
+    }
+    return n;
+  }
+
+  const n1=seedOne('ร้านกาแฟ 2 Gether','R-KFE',csvKafe);
+  const n2=seedOne('ผลิตภัณฑ์อาหารแปรรูปเพื่อสุขภาพ','R-FOOD',csvFood);
+  if(n1+n2>0){ sv(); localStorage.setItem(SEED_KEY,'1'); }
+})();
 </script>
 </body>
 </html>
