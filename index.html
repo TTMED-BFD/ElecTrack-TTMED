@@ -345,11 +345,20 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
           </select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>หน่วยที่ใช้ (kWh)</label><input type="number" id="e-units" placeholder="0" min="0" step="0.01" oninput="calcR()"></div>
-        <div class="form-group"><label>ค่าไฟรวม (บาท)</label><input type="number" id="e-total" placeholder="0.00" min="0" step="0.01" oninput="calcR()"></div>
+      <div class="form-group">
+        <label style="font-size:13px;font-weight:700;color:var(--text1)">⚡ หน่วยที่ใช้ (kWh) <span style="color:var(--red);font-size:11px">*จำเป็น</span></label>
+        <input type="number" id="e-units" placeholder="0" min="0" step="0.01" oninput="calcR()" style="font-size:22px;font-weight:800;padding:12px 16px;color:var(--text1);border:2px solid var(--gold);border-radius:var(--r)">
       </div>
-      <div class="form-group"><label>ราคาต่อหน่วย (คำนวณอัตโนมัติ)</label><input id="e-rate" readonly style="background:var(--surface2);font-weight:700;color:var(--blue)"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ค่าไฟฟ้าเดือนนี้ (บาท) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
+          <input type="number" id="e-total" placeholder="0.00" min="0" step="0.01" oninput="calcR()" style="font-size:16px;font-weight:600">
+        </div>
+        <div class="form-group">
+          <label>ราคาต่อหน่วย <span style="font-size:10px;color:var(--text3);font-weight:400">— คำนวณอัตโนมัติ</span></label>
+          <input id="e-rate" readonly style="background:var(--blue-l);font-weight:700;color:var(--blue-d);font-size:15px">
+        </div>
+      </div>
       <div class="form-group"><label>หมายเหตุ</label><input type="text" id="e-note" placeholder="เช่น งานพิเศษ, อาคารปิดซ่อม"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" id="save-entry-btn" onclick="saveEntry()">✓ บันทึก</button>
@@ -1348,9 +1357,10 @@ async function saveEntry(){
   const total=parseFloat(document.getElementById('e-total').value);
   const note=document.getElementById('e-note').value;
   const msgEl=document.getElementById('e-msg');
-  if(!bid||!y||!m||isNaN(units)||isNaN(total)||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกข้อมูลให้ครบถ้วน</div>'; return; }
+  if(!bid||!y||!m||isNaN(units)||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกอาคาร ปี เดือน และ หน่วยที่ใช้</div>'; return; }
+  const safeTotal = (!isNaN(total) && total>0) ? total : 0;
   const b=getB(bid);
-  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total,rate:parseFloat((total/units).toFixed(4)),note};
+  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeTotal>0?parseFloat((safeTotal/units).toFixed(4)):0,note};
   const idx=S.records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(idx>=0){ rec.id=S.records[idx].id; S.records[idx]=rec; } else { S.records.push(rec); }
   sv();
@@ -1358,7 +1368,7 @@ async function saveEntry(){
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> กำลังบันทึกขึ้น Sheets...';
   try{
     await apiCall('saverecord', rec);
-    msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกขึ้น Google Sheets สำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — ${units.toLocaleString()} kWh = ${total.toLocaleString()} บาท</div>`;
+    msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} kWh</strong>${safeTotal>0?' = '+safeTotal.toLocaleString()+' บาท':''}</div>`;
   }catch(err){
     msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
   }
@@ -1366,7 +1376,7 @@ async function saveEntry(){
   init(); renderEntryStatus();
   setTimeout(()=>{ if(msgEl) msgEl.innerHTML=''; },5000);
 }
-function clearEntry(){['e-units','e-total','e-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-rate').value='';}
+function clearEntry(){['e-units','e-total','e-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-rate').value='';document.getElementById('e-msg').innerHTML='';}
 
 
 /* ===================== WATER ENTRY ===================== */
